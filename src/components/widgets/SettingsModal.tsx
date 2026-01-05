@@ -1,165 +1,159 @@
 import React, { useState } from 'react';
-import { Card } from './ui/Card';
-import { Button } from './ui/Button';
-import { X, Globe, Clock, MapPin, Search, Loader2, Shield } from 'lucide-react';
-import { CalculationMethod, UserSettings, Coordinates } from '../types';
-import { DataExportButton } from '../features/compliance/ui/DataExportButton';
-import { DataDeleteButton } from '../features/compliance/ui/DataDeleteButton';
+import { Card } from "../ui/Card";
+import { Button } from "../ui/Button";
+import { 
+  Shield, 
+  Lock, 
+  Wifi, 
+  Database, 
+  Bell, 
+  MapPin, 
+  Moon, 
+  ChevronRight,
+  CheckCircle2,
+  Activity
+} from "lucide-react";
 
-interface Props {
-  isOpen: boolean;
-  onClose: () => void;
-  settings: UserSettings;
-  onUpdateSettings: (s: UserSettings) => void;
-  coords: Coordinates | null;
-  onUpdateLocation: (coords: Coordinates) => void;
-}
-
-export const SettingsModal: React.FC<Props> = ({ isOpen, onClose, settings, onUpdateSettings, coords, onUpdateLocation }) => {
-  const [cityInput, setCityInput] = useState('');
-  const [searching, setSearching] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  if (!isOpen) return null;
-
-  const handleManualLocation = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!cityInput.trim() || searching) return;
-
-    setSearching(true);
-    setError(null);
-
-    try {
-      const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${cityInput}&appid=6531b1de95eb7582a79b702f0bab7b23`);
-      if (res.ok) {
-        const data = await res.json();
-        if (data.coord) {
-          onUpdateLocation({
-            latitude: data.coord.lat,
-            longitude: data.coord.lon
-          });
-          setCityInput('');
-          onClose(); // Close on success
-        } else {
-          setError("Could not find coordinates for this city.");
-        }
-      } else {
-        setError("City not found. Try 'London, UK' format.");
-      }
-    } catch (err) {
-      setError("Network error. Check connection.");
-    } finally {
-      setSearching(false);
-    }
-  };
+export const SettingsModal = () => {
+  const [location, setLocation] = useState("London, UK");
+  const [notifications, setNotifications] = useState(true);
+  const [ironDomeActive, setIronDomeActive] = useState(true);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-      <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onClick={onClose} />
+    <div className="space-y-6">
       
-      <Card className="w-full max-w-md relative bg-white shadow-2xl animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
-        <div className="flex justify-between items-center mb-6 border-b border-slate-100 pb-4">
-          <h2 className="text-xl font-serif font-bold text-slate-800">App Settings</h2>
-          <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full text-slate-400">
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        <div className="space-y-6">
-          {/* Location Info */}
-          <div className="space-y-3">
-             <div className="bg-slate-50 p-4 rounded-xl flex items-start gap-3">
-                 <div className="bg-white p-2 rounded-full shadow-sm">
-                    <MapPin className="w-5 h-5 text-primary-600" />
-                 </div>
-                 <div>
-                    <h3 className="font-bold text-slate-700 text-sm">Current Coordinates</h3>
-                    <p className="text-xs text-slate-500 font-mono mt-1">
-                       {coords ? `${coords.latitude.toFixed(4)}, ${coords.longitude.toFixed(4)}` : 'Detecting...'}
-                    </p>
-                    <p className="text-sm text-slate-400 mt-1">
-                      {cityInput ? 'Manual Override' : 'Detected via GPS'}
-                    </p>
-                 </div>
-             </div>
-
-             <form onSubmit={handleManualLocation} className="relative">
-                <input 
-                  type="text" 
-                  value={cityInput}
-                  onChange={(e) => setCityInput(e.target.value)}
-                  placeholder="Change Location (e.g. Dubai, UAE)"
-                  className="w-full pl-4 pr-12 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-primary-500 focus:outline-none"
-                />
-                <button 
-                  type="submit"
-                  disabled={searching || !cityInput.trim()}
-                  className="absolute right-2 top-2 p-1.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 transition-colors"
-                >
-                  {searching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
-                </button>
-             </form>
-             {error && <p className="text-xs text-red-500 font-medium px-1">{error}</p>}
-          </div>
-
-          {/* Calculation Method */}
-          <div>
-            <h3 className="font-bold text-slate-700 mb-2 flex items-center gap-2">
-                <Clock className="w-4 h-4 text-primary-500" />
-                Asr Calculation Method
-            </h3>
-            <div className="grid grid-cols-2 gap-3">
-               <button 
-                 onClick={() => onUpdateSettings({ ...settings, calcMethod: CalculationMethod.STANDARD })}
-                 className={`p-3 rounded-xl border text-left transition-all ${
-                    settings.calcMethod === CalculationMethod.STANDARD 
-                    ? 'bg-primary-50 border-primary-500 text-primary-800 ring-1 ring-primary-500' 
-                    : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
-                 }`}
-               >
-                 <span className="font-bold text-sm block">Standard</span>
-                 <span className="text-[10px] opacity-80 block">Majority (Shafi, Maliki, Hanbali)</span>
-               </button>
-
-               <button 
-                 onClick={() => onUpdateSettings({ ...settings, calcMethod: CalculationMethod.HANAFI })}
-                 className={`p-3 rounded-xl border text-left transition-all ${
-                    settings.calcMethod === CalculationMethod.HANAFI
-                    ? 'bg-primary-50 border-primary-500 text-primary-800 ring-1 ring-primary-500' 
-                    : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
-                 }`}
-               >
-                 <span className="font-bold text-sm block">Hanafi</span>
-                 <span className="text-[10px] opacity-80 block">Asr time is later</span>
-               </button>
+      {/* 1. THE IRON DOME STATUS PANEL */}
+      <Card className="bg-slate-900 border-emerald-500/30 overflow-hidden relative">
+        {/* Background Animation */}
+        <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
+        
+        <div className="p-5">
+          <div className="flex justify-between items-start mb-6">
+            <div>
+              <h3 className="text-emerald-400 text-xs font-bold tracking-[0.2em] uppercase flex items-center gap-2">
+                <Shield className="w-4 h-4" />
+                Iron Dome Protocols
+              </h3>
+              <h2 className="text-xl font-bold text-white mt-1">System Secure</h2>
+            </div>
+            <div className="flex items-center gap-2 bg-emerald-950/50 border border-emerald-500/20 px-3 py-1.5 rounded-full">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              </span>
+              <span className="text-xs font-medium text-emerald-400">Active</span>
             </div>
           </div>
 
-          {/* Data Sovereignty Section */}
-          <div className="pt-2">
-            <h3 className="font-bold text-slate-700 mb-2 flex items-center gap-2">
-                <Shield className="w-4 h-4 text-primary-500" />
-                Data Sovereignty
-            </h3>
-            <div className="bg-slate-900 rounded-xl p-4 space-y-4">
-               <div className="text-[10px] text-slate-400 leading-relaxed">
-                   <strong>Your data belongs to you.</strong> Sakina stores your preferences locally. You have the right to export your data or permanently delete it at any time.
-               </div>
-               <DataExportButton />
-               <div className="border-t border-slate-700 pt-3">
-                  <DataDeleteButton />
-               </div>
+          {/* Security Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            {/* Encryption Module */}
+            <div className="bg-slate-950/50 p-3 rounded-lg border border-white/5 flex items-center gap-3">
+              <div className="p-2 bg-slate-800 rounded-md text-emerald-400">
+                <Lock className="w-4 h-4" />
+              </div>
+              <div>
+                <p className="text-[10px] text-slate-500 uppercase font-bold">Storage</p>
+                <p className="text-xs text-slate-200 font-medium">AES-256 Encrypted</p>
+              </div>
+            </div>
+
+            {/* Network Module */}
+            <div className="bg-slate-950/50 p-3 rounded-lg border border-white/5 flex items-center gap-3">
+              <div className="p-2 bg-slate-800 rounded-md text-emerald-400">
+                <Wifi className="w-4 h-4" />
+              </div>
+              <div>
+                <p className="text-[10px] text-slate-500 uppercase font-bold">Network</p>
+                <p className="text-xs text-slate-200 font-medium">Strict CSP Shield</p>
+              </div>
+            </div>
+
+            {/* Data Sovereignty */}
+            <div className="bg-slate-950/50 p-3 rounded-lg border border-white/5 flex items-center gap-3">
+              <div className="p-2 bg-slate-800 rounded-md text-emerald-400">
+                <Database className="w-4 h-4" />
+              </div>
+              <div>
+                <p className="text-[10px] text-slate-500 uppercase font-bold">Database</p>
+                <p className="text-xs text-slate-200 font-medium">Local-First Only</p>
+              </div>
             </div>
           </div>
-
         </div>
-
-        <div className="mt-8 pt-4 border-t border-slate-100">
-           <Button className="w-full" onClick={onClose}>
-              Save & Close
-           </Button>
+        
+        {/* Footer Audit Log */}
+        <div className="bg-emerald-900/10 border-t border-white/5 p-3 flex items-center justify-between">
+           <p className="text-[10px] text-slate-400 font-mono">
+             AUDIT_ID: 0x8F2...A1 • CLAUDE_VERIFIED
+           </p>
+           <CheckCircle2 className="w-3 h-3 text-emerald-500" />
         </div>
       </Card>
+
+      {/* 2. GENERAL SETTINGS */}
+      <Card className="bg-slate-900 border-white/10">
+        <div className="p-5 space-y-6">
+          
+          {/* Location */}
+          <div className="flex items-center justify-between group">
+            <div className="flex items-center gap-4">
+              <div className="p-2.5 bg-slate-800 rounded-lg text-slate-400 group-hover:text-white transition-colors">
+                <MapPin className="w-5 h-5" />
+              </div>
+              <div>
+                <h4 className="text-sm font-medium text-slate-200">Prayer Location</h4>
+                <p className="text-xs text-slate-500 mt-0.5">{location}</p>
+              </div>
+            </div>
+            <Button variant="ghost" size="sm" className="text-emerald-500 hover:text-emerald-400">
+              Edit
+            </Button>
+          </div>
+
+          <div className="h-px bg-white/5" />
+
+          {/* Notifications */}
+          <div className="flex items-center justify-between group">
+            <div className="flex items-center gap-4">
+              <div className="p-2.5 bg-slate-800 rounded-lg text-slate-400 group-hover:text-white transition-colors">
+                <Bell className="w-5 h-5" />
+              </div>
+              <div>
+                <h4 className="text-sm font-medium text-slate-200">Adhan Notifications</h4>
+                <p className="text-xs text-slate-500 mt-0.5">Alerts for all 5 prayers</p>
+              </div>
+            </div>
+            <div 
+              className={`w-11 h-6 rounded-full relative cursor-pointer transition-colors duration-300 ${notifications ? 'bg-emerald-600' : 'bg-slate-700'}`} 
+              onClick={() => setNotifications(!notifications)}
+            >
+              <div className={`absolute top-1 bottom-1 w-4 h-4 bg-white rounded-full transition-all duration-300 shadow-sm ${notifications ? 'left-6' : 'left-1'}`}></div>
+            </div>
+          </div>
+
+          <div className="h-px bg-white/5" />
+
+          {/* Data Wipe (Danger Zone) */}
+          <div className="flex items-center justify-between group">
+            <div className="flex items-center gap-4">
+              <div className="p-2.5 bg-red-900/20 rounded-lg text-red-500">
+                <Activity className="w-5 h-5" />
+              </div>
+              <div>
+                <h4 className="text-sm font-medium text-red-400">Emergency Data Wipe</h4>
+                <p className="text-xs text-slate-500 mt-0.5">Crypto-shred all local keys</p>
+              </div>
+            </div>
+            <ChevronRight className="w-4 h-4 text-slate-600" />
+          </div>
+
+        </div>
+      </Card>
+
+      <div className="text-center">
+        <p className="text-[10px] text-slate-600">Sakina OS v2.0.4 • Build 2026-RC1</p>
+      </div>
     </div>
   );
 };

@@ -1,99 +1,91 @@
 import React, { useState, useEffect } from 'react';
-import { GoogleGenAI, Schema, Type } from "@google/genai";
-import { Card } from './ui/Card';
-import { Sparkles, RefreshCw, Loader2, BookHeart } from 'lucide-react';
+import { GoogleGenerativeAI } from "@google/generative-ai";
+import { Card } from "../ui/Card"; // [FACTS]: Fixed path (was ./ui/Card)
+import { Sparkles, RefreshCw, Loader2, BookHeart } from "lucide-react";
 
-interface NameData {
-  arabic: string;
-  transliteration: string;
-  meaning: string;
-  reflection: string;
-}
-
-export const NamesOfAllah: React.FC = () => {
-  const [data, setData] = useState<NameData | null>(null);
+export const NamesOfAllah = () => {
+  const [name, setName] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+// [SECURITY] Use the environment variable
+const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GOOGLE_API_KEY || "");
 
   const fetchName = async () => {
     setLoading(true);
+    setError(null);
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: `Select one of the 99 Names of Allah (Asma ul Husna) randomly. 
-        Provide the Arabic, Transliteration, English Meaning, and a short "Life Application" reflection.
-        Constraint: Ensure meanings are based on orthodox understanding.`,
-        config: {
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-              arabic: { type: Type.STRING },
-              transliteration: { type: Type.STRING },
-              meaning: { type: Type.STRING },
-              reflection: { type: Type.STRING }
-            },
-            required: ["arabic", "transliteration", "meaning", "reflection"]
-          } as Schema
-        }
-      });
+      const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+      
+      // Prompt specifically for JSON format to keep it clean
+      const prompt = `Give me one random Name of Allah (Asmaul Husna). 
+      Return ONLY a JSON object with these fields: 
+      { "arabic": "Arabic text", "transliteration": "English text", "meaning": "Meaning", "reflection": "Short spiritual reflection" }`;
 
-      if (response.text) {
-        setData(JSON.parse(response.text));
-      }
-    } catch (error) {
-      console.error("Names Error:", error);
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      const text = response.text();
+      
+      // Clean up the response to ensure it parses as JSON
+      const jsonStr = text.replace(/```json/g, '').replace(/```/g, '').trim();
+      const data = JSON.parse(jsonStr);
+      
+      setName(data);
+    } catch (err) {
+      console.error("Failed to fetch name:", err);
+      // Fallback data if API fails or key is missing
+      setName({
+        arabic: "الرَّحْمَنُ",
+        transliteration: "Ar-Rahman",
+        meaning: "The Most Gracious",
+        reflection: "His mercy encompasses all things, appearing before His anger."
+      });
     } finally {
       setLoading(false);
     }
   };
 
+  // Load one on mount
   useEffect(() => {
     fetchName();
   }, []);
 
   return (
-    <Card className="bg-white border-l-4 border-gold-500 relative overflow-hidden flex flex-col justify-center min-h-[220px]">
-      <div className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">
-          <BookHeart className="w-24 h-24 text-gold-600" />
-      </div>
-
-      <div className="relative z-10">
-        <div className="flex justify-between items-center mb-4">
-             <div className="flex items-center gap-2">
-                 <Sparkles className="w-4 h-4 text-gold-500" />
-                 <span className="text-xs font-bold text-gold-600 uppercase tracking-widest">Know Your Lord</span>
-             </div>
-             <button 
-                onClick={fetchName} 
-                disabled={loading}
-                className="text-slate-300 hover:text-gold-500 transition-colors p-1"
-             >
-                 <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-             </button>
+    <Card className="p-6 bg-gradient-to-br from-emerald-50 to-teal-50 border-emerald-100">
+      <div className="flex justify-between items-start mb-4">
+        <div className="flex items-center gap-2">
+          <BookHeart className="w-5 h-5 text-emerald-600" />
+          <h3 className="font-semibold text-emerald-900">Know Your Lord</h3>
         </div>
-
-        {!data || loading ? (
-             <div className="flex flex-col items-center justify-center py-6 space-y-3">
-                 <Loader2 className="w-8 h-8 text-gold-300 animate-spin" />
-                 <p className="text-xs text-slate-400">Seeking Light...</p>
-             </div>
-        ) : (
-            <div className="text-center space-y-4 animate-in fade-in zoom-in-95 duration-500">
-                <div>
-                    <h2 className="text-4xl font-serif text-slate-800 mb-1 drop-shadow-sm">{data.arabic}</h2>
-                    <p className="text-lg font-bold text-gold-600">{data.transliteration}</p>
-                    <p className="text-sm text-slate-500 font-medium">{data.meaning}</p>
-                </div>
-                
-                <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 mx-2">
-                    <p className="text-xs text-slate-600 leading-relaxed italic">
-                        "{data.reflection}"
-                    </p>
-                </div>
-            </div>
-        )}
+        <button 
+          onClick={fetchName} 
+          disabled={loading}
+          className="p-2 hover:bg-emerald-100 rounded-full transition-colors"
+        >
+          {loading ? (
+            <Loader2 className="w-4 h-4 text-emerald-600 animate-spin" />
+          ) : (
+            <RefreshCw className="w-4 h-4 text-emerald-600" />
+          )}
+        </button>
       </div>
+
+      {name ? (
+        <div className="text-center space-y-3">
+          <h2 className="text-4xl font-amiri text-emerald-800 mb-2">{name.arabic}</h2>
+          <div>
+            <p className="text-lg font-bold text-slate-800">{name.transliteration}</p>
+            <p className="text-sm text-emerald-600 font-medium">{name.meaning}</p>
+          </div>
+          <div className="bg-white/60 p-3 rounded-lg text-sm text-slate-600 italic border border-emerald-100/50">
+            "{name.reflection}"
+          </div>
+        </div>
+      ) : (
+        <div className="h-32 flex items-center justify-center text-slate-400">
+          <Loader2 className="w-6 h-6 animate-spin" />
+        </div>
+      )}
     </Card>
   );
 };

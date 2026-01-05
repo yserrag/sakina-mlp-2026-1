@@ -1,12 +1,14 @@
-/// <reference types="vite/client" />
 import { createClient } from '@supabase/supabase-js';
 
-// 1. HARD-CODED KEYS
-const supabaseUrl = 'https://bdwibzrvvuenckwzsmba.supabase.co';
-// NOTE: If this key fails, double-check your Supabase Dashboard. 
-// Standard keys usually start with "ey..."
-const supabaseAnonKey = 'sb_publishable_9r5QY_8C4JHRiavWLFESUg_mqI_LXLl';
-const API_KEY = 'AIzaSyBZoLi15nzpWaqRmpj7GeqEvzVUoG4cNRw'; 
+// [SECURITY] Load keys from the environment vault
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-// 2. CREATE CLIENT
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.warn('⚠️ Supabase keys missing! Check your .env file.');
+}
+
+export const supabase = createClient(
+  supabaseUrl || '',
+  supabaseAnonKey || ''
+);
