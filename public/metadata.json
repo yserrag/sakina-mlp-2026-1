@@ -1,0 +1,9 @@
+{
+  "name": "Sakina-Proto w/Security Testing-241225",
+  "description": "AI-Native Islamic Utility App featuring Client-Side Prayer Calculation, Inheritance Engine, and Gamified Kids Mode.",
+  "requestFramePermissions": [
+    "geolocation",
+    "camera",
+    "microphone"
+  ]
+}

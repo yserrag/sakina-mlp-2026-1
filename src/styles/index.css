@@ -1,0 +1,22 @@
+/* [FACTS]: Core Tailwind directives */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    /* [ANALYSIS]: Sets the deep-space background and text default */
+    @apply bg-[#020617] text-slate-100 antialiased min-h-screen;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+}
+
+/* [ANALYSIS]: Custom utility for the "Pill" navigation look */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Custom glow effects for High-Fidelity cards */
+.glow-teal {
+  box-shadow: 0 0 20px -5px rgba(45, 212, 191, 0.3);
+}
