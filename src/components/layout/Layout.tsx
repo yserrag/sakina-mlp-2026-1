@@ -1,49 +1,51 @@
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { Home, HeartHandshake, Baby, Sparkles, Settings } from 'lucide-react';
+import { useLocation, Link, Outlet } from 'react-router-dom';
+import { Home, User, Settings, Smile } from 'lucide-react'; // Removed Sparkles import
+import { AiFloatingButton } from '../widgets/AiFloatingButton';
 
 interface LayoutProps {
-  children: React.ReactNode;
+  children?: React.ReactNode;
 }
 
 export const Layout = ({ children }: LayoutProps) => {
   const location = useLocation();
   const isActive = (path: string) => location.pathname === path;
 
-  // Navigation Item Component
-  const NavItem = ({ to, icon: Icon, label }: { to: string, icon: any, label: string }) => (
-    <Link to={to} className="flex flex-col items-center gap-1 min-w-[60px] group">
-      <div className={`p-2 rounded-xl transition-all duration-300 ${
-        isActive(to) 
-          ? 'bg-emerald-500/20 text-emerald-400' 
-          : 'text-slate-500 hover:text-slate-300'
-      }`}>
-        <Icon className={`w-6 h-6 ${isActive(to) ? 'stroke-[2.5px]' : 'stroke-2'}`} />
-      </div>
-      <span className={`text-[10px] font-medium tracking-wide transition-colors ${
-        isActive(to) ? 'text-emerald-400' : 'text-slate-600'
-      }`}>
-        {label}
-      </span>
-    </Link>
-  );
-
   return (
-    <div className="min-h-screen bg-slate-950 font-sans selection:bg-emerald-500/30">
+    <div className="min-h-screen bg-slate-950 text-white font-sans selection:bg-emerald-500/30 relative">
       
-      {/* 1. Main Content Area (The Page) */}
-      <main className="pb-24 animate-in fade-in duration-500">
-        {children}
+      {/* 1. Main Content Area */}
+      <main className="pb-24">
+        {children || <Outlet />}
       </main>
 
-      {/* 2. Persistent Bottom Navigation Dock */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-slate-950/90 backdrop-blur-xl border-t border-white/10 px-4 py-3 pb-6 z-50">
-        <div className="flex justify-between items-center max-w-md mx-auto">
-          <NavItem to="/" icon={Home} label="Home" />
-          <NavItem to="/reverts" icon={HeartHandshake} label="Reverts" />
-          <NavItem to="/kids" icon={Baby} label="Kids" />
-          <NavItem to="/ai" icon={Sparkles} label="AI" />
-          <NavItem to="/settings" icon={Settings} label="Settings" />
+      {/* 2. Global AI Companion (Floating) */}
+      <AiFloatingButton />
+
+      {/* 3. Bottom Navigation Bar */}
+      <nav className="fixed bottom-0 inset-x-0 bg-slate-900/90 backdrop-blur-xl border-t border-white/5 z-40 pb-safe">
+        <div className="flex justify-around items-center h-20">
+          <Link to="/" className={`flex flex-col items-center gap-1 p-2 w-16 transition-colors ${isActive('/') ? 'text-emerald-400' : 'text-slate-500'}`}>
+            <Home className="w-6 h-6" />
+            <span className="text-[10px] font-bold">Home</span>
+          </Link>
+          
+          <Link to="/reverts" className={`flex flex-col items-center gap-1 p-2 w-16 transition-colors ${isActive('/reverts') ? 'text-emerald-400' : 'text-slate-500'}`}>
+            <User className="w-6 h-6" />
+            <span className="text-[10px] font-bold">Reverts</span>
+          </Link>
+
+          {/* [FIX] Removed the spacer div here */}
+
+          <Link to="/kids" className={`flex flex-col items-center gap-1 p-2 w-16 transition-colors ${isActive('/kids') ? 'text-emerald-400' : 'text-slate-500'}`}>
+            <Smile className="w-6 h-6" />
+            <span className="text-[10px] font-bold">Kids</span>
+          </Link>
+
+          <Link to="/settings" className={`flex flex-col items-center gap-1 p-2 w-16 transition-colors ${isActive('/settings') ? 'text-emerald-400' : 'text-slate-500'}`}>
+            <Settings className="w-6 h-6" />
+            <span className="text-[10px] font-bold">Settings</span>
+          </Link>
         </div>
       </nav>
     </div>

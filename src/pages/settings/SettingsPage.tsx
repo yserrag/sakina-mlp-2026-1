@@ -1,132 +1,63 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { Shield, Database, Bell, Moon, ChevronRight } from 'lucide-react';
 import { Card } from '../../components/ui/Card';
-import { Button } from '../../components/ui/Button';
-import { 
-  LogOut, 
-  ShieldCheck, 
-  Bell, 
-  MapPin, 
-  Trash2, 
-  ChevronRight,
-  Globe,
-  Moon
-} from 'lucide-react';
-import { STORAGE_KEYS } from '../../shared/lib/storage';
 
-export const SettingsPage: React.FC = () => {
-  const [limitSPI, setLimitSPI] = useState(false);
-
-  const handleLogout = () => {
-    localStorage.removeItem(STORAGE_KEYS.USER_SESSION);
-    window.location.reload();
-  };
-
-  const handleCryptoShred = () => {
-    if (window.confirm("🚨 Permanent Action: This will mathematically shred your encryption keys and render all local data unrecoverable. Continue?")) {
-      indexedDB.deleteDatabase('keyval-store');
-      localStorage.clear();
-      window.location.reload();
-    }
-  };
-
+export const SettingsPage = () => {
   return (
-    <div className="min-h-screen bg-slate-950 p-4 pb-28 space-y-6 max-w-2xl mx-auto animate-in fade-in duration-500">
-      
-      <header className="pt-4 mb-2">
-        <h1 className="text-2xl font-serif font-bold text-white">Settings</h1>
-        <p className="text-xs text-slate-400">Manage your sovereign sanctuary</p>
-      </header>
+    <div className="min-h-screen bg-slate-950 p-6 pb-32 font-sans">
+      <h1 className="text-2xl font-bold text-white mb-6">Settings</h1>
 
-      {/* SECTION: Privacy & Security */}
-      <div className="space-y-3">
-        <h3 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Privacy & Security</h3>
-        <Card className="overflow-hidden border-white/5 bg-slate-900/40">
-          {/* Iron Dome Status */}
-          <div className="p-4 flex items-center justify-between border-b border-white/5">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-emerald-500/10 rounded-lg">
-                <ShieldCheck className="w-5 h-5 text-emerald-400" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-white">Iron Dome Protection</p>
-                <p className="text-[10px] text-emerald-400">On-device AES-256 Active</p>
-              </div>
+      {/* Account Section */}
+      <section className="mb-8">
+        <h2 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">Account</h2>
+        <Card className="bg-slate-900 border-slate-800">
+          <div className="flex items-center gap-4 mb-4">
+            <div className="w-12 h-12 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 font-bold text-xl">
+              Y
             </div>
-            <div className="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]" />
-          </div>
-
-          {/* CPRA Limit SPI Toggle */}
-          <div className="p-4 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-indigo-500/10 rounded-lg">
-                <MapPin className="w-5 h-5 text-indigo-400" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-white">Limit Sensitive Info</p>
-                <p className="text-[10px] text-slate-400">Strict location usage (CPRA)</p>
-              </div>
+            <div>
+              <h3 className="text-white font-bold">Yserrag</h3>
+              <p className="text-xs text-slate-400">Pro Partner</p>
             </div>
-            <button 
-              onClick={() => setLimitSPI(!limitSPI)}
-              className={`w-10 h-5 rounded-full transition-colors relative ${limitSPI ? 'bg-indigo-600' : 'bg-slate-700'}`}
-            >
-              <div className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all ${limitSPI ? 'left-6' : 'left-1'}`} />
-            </button>
           </div>
         </Card>
-      </div>
+      </section>
 
-      {/* SECTION: Preferences */}
-      <div className="space-y-3">
-        <h3 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">App Preferences</h3>
-        <Card className="divide-y divide-white/5 border-white/5 bg-slate-900/40">
-          <div className="p-4 flex items-center justify-between cursor-pointer hover:bg-white/5 transition-colors">
+      {/* Privacy & Data (Iron Dome) */}
+      <section className="mb-8">
+        <h2 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">Data & Privacy</h2>
+        <div className="space-y-2">
+          <button className="w-full p-4 bg-slate-900 rounded-xl border border-slate-800 flex items-center justify-between group active:scale-[0.98] transition-all">
             <div className="flex items-center gap-3">
-              <Bell className="w-5 h-5 text-slate-400" />
-              <span className="text-sm text-slate-200">Adhan Notifications</span>
+              <div className="p-2 bg-blue-500/10 rounded-lg text-blue-400">
+                <Shield className="w-5 h-5" />
+              </div>
+              <div className="text-left">
+                <p className="text-white font-medium text-sm">Iron Dome Status</p>
+                <p className="text-[10px] text-emerald-400">Active & Encrypted</p>
+              </div>
             </div>
             <ChevronRight className="w-4 h-4 text-slate-600" />
-          </div>
-          <div className="p-4 flex items-center justify-between cursor-pointer hover:bg-white/5 transition-colors">
+          </button>
+
+          <button className="w-full p-4 bg-slate-900 rounded-xl border border-slate-800 flex items-center justify-between group active:scale-[0.98] transition-all">
             <div className="flex items-center gap-3">
-              <Globe className="w-5 h-5 text-slate-400" />
-              <span className="text-sm text-slate-200">Language (English)</span>
+              <div className="p-2 bg-purple-500/10 rounded-lg text-purple-400">
+                <Database className="w-5 h-5" />
+              </div>
+              <div className="text-left">
+                <p className="text-white font-medium text-sm">Manage Storage</p>
+                <p className="text-[10px] text-slate-400">0.4 MB Used</p>
+              </div>
             </div>
             <ChevronRight className="w-4 h-4 text-slate-600" />
-          </div>
-          <div className="p-4 flex items-center justify-between cursor-pointer hover:bg-white/5 transition-colors">
-            <div className="flex items-center gap-3">
-              <Moon className="w-5 h-5 text-slate-400" />
-              <span className="text-sm text-slate-200">Dark Mode (Default)</span>
-            </div>
-            <div className="px-2 py-1 bg-white/5 rounded text-[10px] text-slate-400 uppercase font-bold">System</div>
-          </div>
-        </Card>
+          </button>
+        </div>
+      </section>
+
+      <div className="mt-8 text-center">
+        <p className="text-[10px] text-slate-600">Sakina OS v2.0</p>
       </div>
-
-      {/* SECTION: Account Actions */}
-      <div className="space-y-3 pt-4">
-        <Button 
-          onClick={handleLogout}
-          className="w-full bg-slate-900 hover:bg-slate-800 text-white border border-white/5 py-6 rounded-2xl gap-3"
-        >
-          <LogOut className="w-4 h-4 text-slate-400" />
-          Log Out of Session
-        </Button>
-
-        <button 
-          onClick={handleCryptoShred}
-          className="w-full flex items-center justify-center gap-2 text-rose-500 text-[11px] font-bold uppercase tracking-widest py-4 hover:bg-rose-500/5 rounded-xl transition-colors"
-        >
-          <Trash2 className="w-3 h-3" />
-          Crypto-Shred All Local Data
-        </button>
-      </div>
-
-      <footer className="text-center space-y-1 py-4">
-        <p className="text-[10px] text-slate-600 uppercase font-bold tracking-tighter">Sakina 2.0 MLP</p>
-        <p className="text-[9px] text-slate-700 italic">"Verifiable Truth. Absolute Privacy."</p>
-      </footer>
     </div>
   );
 };

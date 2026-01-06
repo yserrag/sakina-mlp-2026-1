@@ -1,61 +1,75 @@
-import React from 'react';
-import { ChevronDown, ChevronUp, ArrowUp, ArrowDown } from 'lucide-react';
+import React, { useState } from 'react';
+import { ChevronDown, ChevronUp, ArrowUp, ArrowDown, GripVertical } from 'lucide-react';
 import { useWidgetStore } from '../../shared/lib/widgetStore';
+import { Card } from './Card';
 
-interface Props {
+interface WidgetWrapperProps {
   id: string;
   title: string;
   children: React.ReactNode;
+  icon?: React.ReactNode;
 }
 
-export const WidgetWrapper: React.FC<Props> = ({ id, title, children }) => {
-  const { collapsed, toggleCollapse, order, setOrder } = useWidgetStore();
-  const isCollapsed = collapsed[id];
+export const WidgetWrapper: React.FC<WidgetWrapperProps> = ({ id, title, children, icon }) => {
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const { moveWidget, order } = useWidgetStore();
 
-  const move = (direction: 'up' | 'down') => {
-    const idx = order.indexOf(id);
-    const newOrder = [...order];
-    if (direction === 'up' && idx > 0) {
-      [newOrder[idx], newOrder[idx - 1]] = [newOrder[idx - 1], newOrder[idx]];
-    } else if (direction === 'down' && idx < order.length - 1) {
-      [newOrder[idx], newOrder[idx + 1]] = [newOrder[idx + 1], newOrder[idx]];
-    }
-    setOrder(newOrder);
-  };
+  const isFirst = order[0] === id;
+  const isLast = order[order.length - 1] === id;
 
   return (
-    // [THEME]: Deep Slate-900 Glass Card
-    <div className="group relative mb-6 rounded-2xl bg-slate-900/60 backdrop-blur-md border border-white/5 shadow-lg transition-all hover:border-white/10 hover:shadow-emerald-900/20">
-      
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-white/5 bg-white/[0.02]">
+    <Card className={`relative transition-all duration-300 border-white/5 bg-slate-900/40 backdrop-blur-sm ${isCollapsed ? 'mb-2' : 'mb-4'}`}>
+      {/* Header Bar */}
+      <div className="flex items-center justify-between p-4 border-b border-white/5">
+        
+        {/* Title & Icon */}
         <div className="flex items-center gap-3">
-          {/* Reorder Handles */}
-          <div className="flex flex-col opacity-0 group-hover:opacity-100 transition-opacity duration-300 -space-y-1">
-            <button onClick={() => move('up')} className="text-slate-600 hover:text-emerald-400 p-0.5"><ArrowUp className="w-3 h-3" /></button>
-            <button onClick={() => move('down')} className="text-slate-600 hover:text-emerald-400 p-0.5"><ArrowDown className="w-3 h-3" /></button>
-          </div>
-          
-          <h3 className="text-[11px] font-bold tracking-[0.2em] text-slate-300 uppercase font-sans flex items-center gap-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></span>
-            {title}
-          </h3>
+          {icon && <div className="text-emerald-500">{icon}</div>}
+          <h3 className="font-bold text-sm text-slate-200 uppercase tracking-wider">{title}</h3>
         </div>
 
-        <button 
-          onClick={() => toggleCollapse(id)}
-          className="p-1.5 rounded-lg text-slate-500 hover:bg-white/5 hover:text-white transition-colors"
-        >
-          {isCollapsed ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
-        </button>
+        {/* Controls */}
+        <div className="flex items-center gap-1">
+          {/* Move Up */}
+          <button
+            onClick={() => moveWidget(id, 'up')}
+            disabled={isFirst}
+            className="p-1.5 rounded-lg text-slate-500 hover:text-emerald-400 hover:bg-white/5 disabled:opacity-30 transition-colors"
+            title="Move Up"
+          >
+            <ArrowUp className="w-4 h-4" />
+          </button>
+
+          {/* Move Down */}
+          <button
+            onClick={() => moveWidget(id, 'down')}
+            disabled={isLast}
+            className="p-1.5 rounded-lg text-slate-500 hover:text-emerald-400 hover:bg-white/5 disabled:opacity-30 transition-colors"
+            title="Move Down"
+          >
+            <ArrowDown className="w-4 h-4" />
+          </button>
+
+          {/* Divider */}
+          <div className="w-px h-4 bg-white/10 mx-1" />
+
+          {/* Collapse/Expand */}
+          <button
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            className="p-1.5 rounded-lg text-slate-500 hover:text-white hover:bg-white/5 transition-colors"
+            title={isCollapsed ? "Expand" : "Collapse"}
+          >
+            {isCollapsed ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
+          </button>
+        </div>
       </div>
 
-      {/* Content */}
-      {!isCollapsed && (
-        <div className="animate-in slide-in-from-top-2 duration-300">
+      {/* Widget Content */}
+      <div className={`transition-all duration-300 ease-in-out overflow-hidden ${isCollapsed ? 'max-h-0 opacity-0' : 'max-h-[800px] opacity-100'}`}>
+        <div className="p-1">
            {children}
         </div>
-      )}
-    </div>
+      </div>
+    </Card>
   );
 };
