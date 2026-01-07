@@ -1,162 +1,164 @@
-import React, { useState, useEffect, useLayoutEffect } from 'react';
-import { Settings, Bell, Cloud, Sun, CloudRain, RotateCcw } from 'lucide-react';
-import { useWidgetStore, DEFAULT_WIDGETS } from '../../shared/lib/widgetStore';
+import React, { useLayoutEffect } from 'react';
+import { Bell, Settings, CloudRain } from 'lucide-react';
+
+// [IMPORTS] Core Utilities
+import { useWidgetStore } from '../../shared/lib/widgetStore';
+import { getHijriDate } from '../../shared/lib/dateUtils';
 import { WidgetWrapper } from '../../components/ui/WidgetWrapper';
 
-// Widget Imports
-import { DailyWisdom } from '../../components/widgets/DailyWisdom';
-import { HalalScanner } from '../../components/widgets/HalalScanner';
+// [IMPORTS] Real Widgets
 import { PrayerWidget } from '../../components/widgets/PrayerWidget';
-import { QiblaWidget } from '../../components/widgets/QiblaWidget';
-import { MosqueFinder } from '../../components/widgets/MosqueFinder';
-import { SmartDhikr } from '../../components/widgets/SmartDhikr';
-import { NamesOfAllah } from '../../components/widgets/NamesOfAllah';
-import { ZakatCalculator } from '../../components/widgets/ZakatCalculator';
-import { AffiliateDock } from '../../components/widgets/AffiliateDock'; 
-import { JournalWidget } from '../../components/widgets/JournalWidget';
+import { HalalScanner } from '../../components/widgets/HalalScanner';
 import { DreamInterpreter } from '../../components/widgets/DreamInterpreter';
 import { SoulComfort } from '../../components/widgets/SoulComfort';
+import { SmartDhikr } from '../../components/widgets/SmartDhikr';
+import { NamesOfAllah } from '../../components/widgets/NamesOfAllah';
+import { JournalWidget } from '../../components/widgets/JournalWidget';
+import { RevertJourney } from '../../components/widgets/RevertJourney';
+import { ZakatCalculator } from '../../components/widgets/ZakatCalculator'; // [NEW] Widget I
 
-// Weather Badge (Proxied)
+// [INLINE COMPONENT] WeatherBadge (Kept here to prevent file errors)
 const WeatherBadge = () => {
-  const [weather, setWeather] = useState<{ temp: number; code: number } | null>(null);
-  
-  useEffect(() => {
-    fetch(`/api/proxy/weather?lat=51.5074&lon=-0.1278`)
-      .then(res => res.ok ? res.json() : null)
-      .then(data => {
-        if (data?.temp !== undefined) setWeather({ temp: data.temp, code: data.code });
-      })
-      .catch(console.error);
-  }, []);
-
-  if (!weather) return null;
-  let Icon = Sun;
-  let label = "Clear";
-  if (weather.code > 3) { Icon = Cloud; label = "Cloudy"; }
-  if (weather.code > 50) { Icon = CloudRain; label = "Rain"; }
-
   return (
-    <div className="flex items-center gap-3 bg-slate-900/50 border border-white/5 px-3 py-1.5 rounded-full backdrop-blur-md transition-all hover:bg-slate-800/50 hover:border-white/10 animate-in fade-in">
-      <Icon className="w-4 h-4 text-amber-400" />
-      <div className="flex flex-col leading-none">
-        <span className="text-sm font-bold text-white">{weather.temp}°C</span>
-        <span className="text-[9px] text-slate-400 uppercase tracking-wide">{label}</span>
-      </div>
+    <div className="bg-slate-900 border border-white/10 rounded-full px-3 py-1 flex items-center gap-2">
+      <CloudRain className="w-3 h-3 text-emerald-400" />
+      <span className="text-xs text-white">London</span>
+      <span className="text-xs text-emerald-400 font-bold">12°C</span>
     </div>
   );
 };
 
 export const DashboardPage = () => {
-  const { order, ensureWidgetsExist, resetLayout } = useWidgetStore();
-  
-  useLayoutEffect(() => { 
-    window.scrollTo(0, 0); 
-    // [CRITICAL] Ensure new features appear even for returning users
-    ensureWidgetsExist(['dream-interpreter', 'soul-comfort', 'journal', 'affiliate-dock', 'prayer-times']);
+  const { order } = useWidgetStore();
+
+  useLayoutEffect(() => {
+    window.scrollTo(0, 0);
   }, []);
 
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Good Morning' : hour < 18 ? 'Good Afternoon' : 'Good Evening';
+  
+  // [DATE LOGIC]
+  const hijriDate = getHijriDate();
+  const gregorianDate = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
 
-  // Dual Calendar Logic
-  const today = new Date();
-  const gregorianDate = today.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
-  const hijriDate = new Intl.DateTimeFormat('en-TN-u-ca-islamic-umalqura', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric'
-  }).format(today);
-
-  // Widget Registry
+  // [REGISTRY] Maps ID strings to Real Components
   const WIDGET_REGISTRY: Record<string, React.ReactNode> = {
-    'prayer-times': <PrayerWidget />, 
-    'prayer-widget': <PrayerWidget />, 
-    'affiliate-dock': <AffiliateDock />,
-    'journal': <JournalWidget />,
-    'dream-interpreter': <DreamInterpreter />,
-    'soul-comfort': <SoulComfort />,
-    'daily-wisdom': <DailyWisdom />,
+    // Core A (Time)
+    'prayer-times': <PrayerWidget />,
+    'prayer-widget': <PrayerWidget />,
+    
+    // Core B (Body)
     'halal-scanner': <HalalScanner />,
-    'names-of-allah': <NamesOfAllah />,
+    
+    // Core C (Mind)
+    'ai-assistant': <DreamInterpreter />, 
+    'dream-interpreter': <DreamInterpreter />,
+    
+    // Core D (Heart)
+    'daily-wisdom': <SoulComfort />,
+    // 'soul-comfort': <SoulComfort />, // Commented out to prevent double rendering
+    
+    // Core F (Habit)
     'smart-dhikr': <SmartDhikr />,
-    'qibla': <QiblaWidget />,
-    'mosque-finder': <MosqueFinder />,
-    'zakat': <ZakatCalculator />
+
+    // Core E (Knowledge)
+    'names-of-allah': <NamesOfAllah />,
+
+    // Core G (Reflection)
+    'journal': <JournalWidget />,
+
+    // Core H (Guidance)
+    'revert-journey': <RevertJourney />,
+    
+    // Core I (Charity) - [NEW]
+    'zakat': <ZakatCalculator />,
+    
+    // Future Placeholders
+    'qibla': <div className="p-4 bg-slate-900 rounded-xl border border-white/5 text-slate-500 text-xs text-center">Qibla (Coming Soon)</div>,
+    'mosque-finder': <div className="p-4 bg-slate-900 rounded-xl border border-white/5 text-slate-500 text-xs text-center">Mosque Finder (Coming Soon)</div>
   };
 
   const TITLES: Record<string, string> = {
-    'prayer-times': 'Prayer Times',
-    'affiliate-dock': 'Recommended For You',
-    'journal': 'Private Journal',
-    'dream-interpreter': 'Dream Interpreter',
+    'daily-wisdom': 'Soul Comfort',
     'soul-comfort': 'Soul Comfort',
-    'daily-wisdom': 'Daily Wisdom',
-    'ai-assistant': 'Sakina AI',
+    'ai-assistant': 'Dream Guide',
+    'dream-interpreter': 'Dream Guide',
     'halal-scanner': 'Halal Scanner',
-    'names-of-allah': 'Know Your Lord',
     'smart-dhikr': 'Smart Dhikr',
+    'names-of-allah': 'Know Your Lord',
+    'journal': 'Reflection Vault',
+    'revert-journey': 'My Journey',
+    'zakat': 'Zakat Calculator', // [NEW] Title
     'qibla': 'Qibla Direction',
-    'mosque-finder': 'Mosque Finder',
-    'zakat': 'Zakat Calculator'
+    'mosque-finder': 'Mosque Finder'
   };
+
+  const hasPrayerWidget = order.includes('prayer-times') || order.includes('prayer-widget');
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 pb-32 relative selection:bg-emerald-500/30">
-      
-      {/* Background Ambience */}
+
+      {/* Ambient Background */}
       <div className="fixed top-0 inset-x-0 h-96 bg-gradient-to-b from-emerald-900/10 to-transparent pointer-events-none" />
 
       {/* Header */}
-      <header className="sticky top-0 z-40 px-5 pt-12 pb-4 bg-slate-950/80 backdrop-blur-xl border-b border-white/5 transition-all">
+      <header className="sticky top-0 z-40 px-5 pt-12 pb-4 bg-slate-950/80 backdrop-blur-xl border-b border-white/5">
         <div className="flex justify-between items-start mb-4">
           <div>
-             <p className="text-emerald-500 text-[10px] font-bold tracking-widest uppercase mb-1">Ramadan 2026</p>
-             <h1 className="text-2xl font-bold text-white tracking-tight">{greeting}</h1>
+            {/* CAMPAIGN LABEL */}
+            <p className="text-emerald-500/50 text-[9px] font-bold tracking-widest uppercase mb-1">Ramadan 2026 • Target</p>
+            
+            {/* GREETING */}
+            <h1 className="text-2xl font-bold text-white tracking-tight mb-1">{greeting}</h1>
+            
+            {/* HIJRI DATE */}
+            <div className="flex items-center gap-2">
+               <span className="text-amber-400 font-serif text-sm tracking-wide">{hijriDate}</span>
+               <span className="text-slate-600 text-[10px]">•</span>
+               <span className="text-slate-400 text-xs">{gregorianDate}</span>
+            </div>
           </div>
           <WeatherBadge />
         </div>
+        
+        {/* ICONS ROW */}
         <div className="flex justify-between items-center">
-          <div className="flex flex-col">
-            <p className="text-slate-400 text-xs font-medium">{gregorianDate}</p>
-            <p className="text-emerald-600/80 text-[10px] uppercase tracking-wide font-bold">{hijriDate}</p>
-          </div>
-          
-          <div className="flex gap-2">
-             <button 
-                onClick={resetLayout}
-                className="w-9 h-9 rounded-xl bg-slate-900 border border-white/10 flex items-center justify-center hover:bg-slate-800 text-slate-400 hover:text-emerald-400 transition-all"
-                title="Reset Widgets"
-             >
-                <RotateCcw className="w-4 h-4" />
-             </button>
-             <button className="w-9 h-9 rounded-xl bg-slate-900 border border-white/10 flex items-center justify-center hover:bg-slate-800 text-slate-400 hover:text-emerald-400 transition-all"><Settings className="w-4 h-4" /></button>
+          <p className="text-slate-500 text-xs hidden">Offset</p>
+          <div className="flex gap-2 w-full justify-end">
+            <button className="w-9 h-9 rounded-xl bg-slate-900 border border-white/10 flex items-center justify-center hover:bg-slate-800 text-slate-400 hover:text-emerald-400 transition-all">
+              <Bell className="w-4 h-4" />
+            </button>
+            <button className="w-9 h-9 rounded-xl bg-slate-900 border border-white/10 flex items-center justify-center hover:bg-slate-800 text-slate-400 hover:text-emerald-400 transition-all">
+              <Settings className="w-4 h-4" />
+            </button>
           </div>
         </div>
       </header>
 
-      {/* Content Stream (Fully Movable Grid) */}
-      <div className="px-4 mt-6 relative z-10">
+      {/* Widget Grid */}
+      <div className="px-4 mt-6 relative z-10 space-y-3">
+        {/* Force Prayer Widget at top if missing */}
+        {!hasPrayerWidget && (
+          <div className="mb-4 animate-in fade-in slide-in-from-top-4 duration-700">
+            <PrayerWidget />
+          </div>
+        )}
+
+        {/* Render Dynamic Widgets */}
         {order.map((id) => {
           if (!WIDGET_REGISTRY[id]) return null;
 
-          // Special case for Affiliate Dock to keep it clean (or wrap it too if you prefer)
-          // For consistency with "All widgets movable", we wrap it.
-          
+          if (id === 'prayer-times' || id === 'prayer-widget') {
+            return <div key={id} className="mb-4">{WIDGET_REGISTRY[id]}</div>;
+          }
+
           return (
             <WidgetWrapper key={id} id={id} title={TITLES[id] || id}>
-               {WIDGET_REGISTRY[id]}
+              {WIDGET_REGISTRY[id]}
             </WidgetWrapper>
           );
         })}
-        
-        {/* Helper message if grid is empty */}
-        {order.length === 0 && (
-           <div className="text-center py-10 opacity-50">
-              <p>No widgets enabled.</p>
-              <button onClick={resetLayout} className="text-emerald-400 text-sm underline mt-2">Reset Default Layout</button>
-           </div>
-        )}
       </div>
     </div>
   );

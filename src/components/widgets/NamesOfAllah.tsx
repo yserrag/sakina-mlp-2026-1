@@ -1,135 +1,108 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { Book, Star, ChevronRight, Share2 } from 'lucide-react';
 import { Card } from '../ui/Card';
-import { Sparkles, RefreshCw, Loader2, BookHeart, ScrollText } from 'lucide-react';
+import { Button } from '../ui/Button';
 
-interface NameData {
-  arabic: string;
-  transliteration: string;
-  meaning: string;
-  reflection: string;
-  hadith: string; // [NEW] Added as requested
-}
-
-// [DATA] Local Wisdom Database (Instant Load)
-const NAMES_DB: NameData[] = [
-  {
-    arabic: "ٱلْفَتَّاحُ",
-    transliteration: "Al-Fattāḥ",
-    meaning: "The Opener / The Granter of Victory",
-    reflection: "When doors seem closed—whether in sustenance, knowledge, or relief—call upon Al-Fattah. He creates a way out where there is none.",
-    hadith: "Prophet Muhammad (ﷺ) said: 'O Allah, open for me the doors of Your mercy.'"
+// A small subset of the 99 Names for the MVP
+const NAMES_DATA = [
+  { 
+    arabic: "ٱللَّٰهُ", transliteration: "Allah", 
+    meaning: "The Greatest Name", 
+    desc: "The One and Only Deity, the Creator and Sustainer of the universe, possessing all attributes of perfection." 
   },
-  {
-    arabic: "ٱلْوَدُودُ",
-    transliteration: "Al-Wadūd",
-    meaning: "The Most Loving",
-    reflection: "His love is not just a feeling but an active care. He loves you more than a mother loves her child. Return to Him, and you will find Him embracing.",
-    hadith: "Allah says: 'If My servant comes to Me walking, I go to him running.' (Bukhari)"
+  { 
+    arabic: "ٱلرَّحْمَٰنُ", transliteration: "Ar-Rahman", 
+    meaning: "The Entirely Merciful", 
+    desc: "He whose Mercy encompasses all things and all beings, regardless of their belief or action." 
   },
-  {
-    arabic: "ٱلرَّزَّاقُ",
-    transliteration: "Ar-Razzāq",
-    meaning: "The Provider",
-    reflection: "Your sustenance was written before you were born. Do not anxiety over what is guaranteed. Work with excellence, but trust the Source.",
-    hadith: "If you relied on Allah as He should be relied on, He would provide for you as He provides for the birds. (Tirmidhi)"
+  { 
+    arabic: "ٱلرَّحِيمُ", transliteration: "Ar-Rahim", 
+    meaning: "The Especially Merciful", 
+    desc: "He who bestows a special, permanent mercy upon the believers in the Hereafter." 
   },
-  {
-    arabic: "ٱلْغَفُورُ",
-    transliteration: "Al-Ghafūr",
-    meaning: "The Exceedingly Forgiving",
-    reflection: "No sin is greater than His mercy. He does not just forgive; He covers and hides your faults. Never despair.",
-    hadith: "Allah says: 'O son of Adam, were your sins to reach the clouds of the sky and were you then to ask forgiveness of Me, I would forgive you.' (Tirmidhi)"
+  { 
+    arabic: "ٱلْمَلِكُ", transliteration: "Al-Malik", 
+    meaning: "The King", 
+    desc: "The Absolute Ruler and Owner of all things. His dominion is complete and eternal." 
   },
-  {
-    arabic: "ٱلشَّافِي",
-    transliteration: "Ash-Shāfi",
-    meaning: "The Healer",
-    reflection: "Medicine is the method, but He is the Cure. Whether it is a physical pain or a broken heart, turn to the One who holds the remedy.",
-    hadith: "The Prophet (ﷺ) used to say: 'O Allah, Lord of mankind, remove the difficulty and bring about healing. You are the Healer.' (Bukhari)"
+  { 
+    arabic: "ٱلْقُدُّوسُ", transliteration: "Al-Quddus", 
+    meaning: "The Pure / Holy", 
+    desc: "The One currently and forever free from any imperfection, error, or negligence." 
+  },
+  { 
+    arabic: "ٱلسَّلَامُ", transliteration: "As-Salam", 
+    meaning: "The Source of Peace", 
+    desc: "The One who is free from every imperfection and the source of peace and safety for His creation." 
   }
 ];
 
-export const NamesOfAllah: React.FC = () => {
-  const [data, setData] = useState<NameData | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [index, setIndex] = useState(0);
+export const NamesOfAllah = () => {
+  const [isFlipped, setIsFlipped] = useState(false);
 
-  const fetchName = () => {
-    setLoading(true);
-    // Simulate a "seeking" delay for effect
-    setTimeout(() => {
-      const nextIndex = (index + 1) % NAMES_DB.length;
-      setIndex(nextIndex);
-      setData(NAMES_DB[nextIndex]);
-      setLoading(false);
-    }, 800);
-  };
-
-  useEffect(() => {
-    setData(NAMES_DB[0]); // Load first name immediately
-  }, []);
+  // [LOGIC] Pick a name based on the Day of the Year so it changes daily
+  const today = new Date();
+  const dayOfYear = Math.floor((today.getTime() - new Date(today.getFullYear(), 0, 0).getTime()) / 1000 / 60 / 60 / 24);
+  const nameIndex = dayOfYear % NAMES_DATA.length;
+  const name = NAMES_DATA[nameIndex];
 
   return (
-    <Card className="bg-slate-900 border-l-4 border-amber-500 relative overflow-hidden flex flex-col justify-center min-h-[300px] shadow-lg">
+    <Card className="bg-slate-900 border border-white/10 overflow-hidden flex flex-col min-h-[320px] relative group">
       
-      {/* Background Ambience */}
-      <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
-          <BookHeart className="w-32 h-32 text-amber-500" />
+      {/* HEADER */}
+      <div className="p-4 border-b border-white/5 flex justify-between items-center bg-slate-950/30">
+        <div className="flex items-center gap-2">
+          <div className="bg-teal-500/10 p-1.5 rounded-lg">
+            <Book className="w-4 h-4 text-teal-400" />
+          </div>
+          <div>
+            <h3 className="font-bold text-white text-sm uppercase tracking-wide">Know Your Lord</h3>
+            <p className="text-[10px] text-slate-400">Name of the Day</p>
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <button className="text-slate-500 hover:text-white transition-colors">
+            <Share2 className="w-4 h-4" />
+          </button>
+        </div>
       </div>
 
-      <div className="relative z-10 p-2">
-        {/* Header */}
-        <div className="flex justify-between items-center mb-6 px-2">
-             <div className="flex items-center gap-2">
-                 <div className="p-1.5 bg-amber-500/10 rounded-lg">
-                    <Sparkles className="w-4 h-4 text-amber-500" />
-                 </div>
-                 <span className="text-xs font-bold text-amber-500 uppercase tracking-widest">Know Your Lord</span>
-             </div>
-             <button 
-                onClick={fetchName} 
-                disabled={loading}
-                className="text-slate-500 hover:text-amber-400 transition-colors p-2 hover:bg-white/5 rounded-full"
-                title="Next Name"
-             >
-                 <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-             </button>
+      {/* CONTENT CARD (Click to Flip) */}
+      <div 
+        className="flex-1 p-6 relative cursor-pointer perspective-1000"
+        onClick={() => setIsFlipped(!isFlipped)}
+      >
+        {/* FRONT SIDE */}
+        <div className={`absolute inset-0 flex flex-col items-center justify-center p-6 transition-all duration-500 backface-hidden ${isFlipped ? 'opacity-0 rotate-y-180 pointer-events-none' : 'opacity-100 rotate-y-0'}`}>
+           <div className="w-full flex justify-between items-start absolute top-4 px-4">
+             <span className="text-[10px] text-slate-500 uppercase tracking-widest">#{nameIndex + 1}</span>
+             <Star className="w-4 h-4 text-slate-700" />
+           </div>
+
+           <h2 className="text-6xl text-white mb-4 drop-shadow-2xl font-amiri" style={{ fontFamily: 'serif' }}>
+             {name.arabic}
+           </h2>
+           <h3 className="text-xl font-bold text-teal-400 mb-1">{name.transliteration}</h3>
+           <p className="text-sm text-slate-400">{name.meaning}</p>
+
+           <div className="absolute bottom-6 flex items-center gap-2 text-xs text-slate-500">
+             <span>Tap to learn more</span>
+             <ChevronRight className="w-3 h-3" />
+           </div>
         </div>
 
-        {!data || loading ? (
-             <div className="flex flex-col items-center justify-center py-10 space-y-4 animate-pulse">
-                 <Loader2 className="w-8 h-8 text-amber-500/50 animate-spin" />
-                 <p className="text-xs text-slate-500 uppercase tracking-widest">Seeking Light...</p>
-             </div>
-        ) : (
-            <div className="text-center space-y-6 animate-in fade-in zoom-in-95 duration-500">
-                {/* The Name */}
-                <div>
-                    <h2 className="text-5xl font-arabic text-white mb-2 drop-shadow-md leading-normal pt-2">{data.arabic}</h2>
-                    <p className="text-xl font-bold text-amber-400">{data.transliteration}</p>
-                    <p className="text-sm text-slate-400 font-medium uppercase tracking-wide mt-1">{data.meaning}</p>
-                </div>
-                
-                {/* The Reflection Bubble */}
-                <div className="bg-slate-800/50 p-4 rounded-2xl border border-white/5 mx-2 relative group hover:border-amber-500/20 transition-colors">
-                    <p className="text-sm text-slate-300 leading-relaxed italic">
-                        "{data.reflection}"
-                    </p>
-                </div>
-
-                {/* [NEW] The Hadith Section */}
-                <div className="flex items-start gap-3 px-4 text-left">
-                    <ScrollText className="w-4 h-4 text-emerald-500 shrink-0 mt-1" />
-                    <div>
-                        <p className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest mb-1">Prophetic Wisdom</p>
-                        <p className="text-xs text-slate-400 leading-relaxed">
-                            {data.hadith}
-                        </p>
-                    </div>
-                </div>
-            </div>
-        )}
+        {/* BACK SIDE */}
+        <div className={`absolute inset-0 bg-slate-800 flex flex-col items-center justify-center p-8 text-center transition-all duration-500 backface-hidden ${isFlipped ? 'opacity-100 rotate-y-0' : 'opacity-0 -rotate-y-180 pointer-events-none'}`}>
+           <h3 className="text-2xl text-white font-amiri mb-4">{name.arabic}</h3>
+           <p className="text-sm text-slate-300 leading-relaxed">
+             "{name.desc}"
+           </p>
+           <Button variant="ghost" className="mt-6 text-xs text-teal-400 hover:text-white">
+             Show Card
+           </Button>
+        </div>
       </div>
+
     </Card>
   );
 };

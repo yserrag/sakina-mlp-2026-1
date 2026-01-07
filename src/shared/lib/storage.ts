@@ -1,46 +1,53 @@
 import { get, set, del } from 'idb-keyval';
-import { SecurityService } from './security';
+import { supabase } from './supabase';
 
-// [BLUEPRINT 2.1]: Local-First "Source of Truth"
-export const STORAGE_KEYS = {
-  USER_SESSION: 'sakina_user_session',
-  THEME_PREF: 'sakina_theme',
-  HOME_LOCATION: 'sakina_home_loc',
-  PRAYER_ADJUSTMENTS: 'sakina_adjustments',
-  QURAN_BOOKMARKS: 'sakina_bookmarks',
-  // [BLUEPRINT 3.3]: Sensitive data logs
-  SPIRITUAL_JOURNAL: 'sakina_journal_encrypted' 
-};
+/**
+ * THE IRON DOME STORAGE ENGINE
+ * Principle: Local-First. 
+ * Data lives on the device (IDB). Cloud is only for encrypted backup (Phase 2).
+ */
 
-export const SovereignStorage = {
-  // Public Data (No Encryption needed, e.g. Theme)
-  async savePublic(key: string, value: any) {
-    await set(key, value);
+export const storage = {
+  /**
+   * Save data.
+   * 1. Writes to IndexedDB (Device) - Instant & Offline ready.
+   * 2. (Future) Pushes encrypted blob to Supabase if user is logged in.
+   */
+  async set(key: string, value: any) {
+    try {
+      // 1. Critical: Save to Device
+      await set(key, value);
+      
+      // 2. Optional: Cloud Sync (Placeholder for Phase 2)
+      // if (supabase && userIsLoggedIn) { await uploadEncrypted(key, value); }
+      
+      console.log(`[Vault] Saved ${key} locally.`);
+    } catch (err) {
+      console.error('[Vault] Save Failed:', err);
+    }
   },
 
-  async loadPublic(key: string, fallback: any) {
-    return (await get(key)) || fallback;
+  /**
+   * Retrieve data.
+   * 1. Tries Device (IDB) first.
+   * 2. Returns null if missing.
+   */
+  async get<T>(key: string): Promise<T | null> {
+    try {
+      const value = await get<T>(key);
+      return value || null;
+    } catch (err) {
+      console.error('[Vault] Load Failed:', err);
+      return null;
+    }
   },
 
-  // [BLUEPRINT 3.3]: "Encryption at Rest" for Sensitive Data
-  async saveSecure(key: string, value: any) {
-    const { ciphertext, iv } = await SecurityService.encrypt(value);
-    // Store as a bundle: { data, iv }
-    // We strictly avoid storing plain text logs [cite: 79]
-    await set(key, { 
-      data: Array.from(new Uint8Array(ciphertext)), // Store as array for IDB compatibility
-      iv: Array.from(iv) 
-    });
-  },
-
-  async loadSecure(key: string, fallback: any) {
-    const record = await get(key);
-    if (!record) return fallback;
-
-    // Rehydrate arrays back to Buffers
-    const ciphertext = new Uint8Array(record.data).buffer;
-    const iv = new Uint8Array(record.iv);
-
-    return await SecurityService.decrypt(ciphertext, iv) || fallback;
+  /**
+   * Remove data.
+   * Wipes it from Device (and Future Cloud).
+   */
+  async remove(key: string) {
+    await del(key);
+    console.log(`[Vault] Wiped ${key}.`);
   }
 };

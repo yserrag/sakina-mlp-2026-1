@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { ContentValidator } from './contentValidator';
 
 // Interface for the experimental Chrome "window.ai" API
 interface WindowAI {
@@ -26,7 +25,6 @@ export const useGemini = () => {
   const [error, setError] = useState<string | null>(null);
   const [activeModelName, setActiveModelName] = useState<string>('gemini-pro');
 
-  // [INIT] Auto-detect the best available model for this user/region
   useEffect(() => {
     const checkModels = async () => {
       const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
@@ -39,6 +37,7 @@ export const useGemini = () => {
         
         if (!response.ok) {
            console.error('[AI] Failed to list models. Status:', response.status);
+           console.error('Hint: Ensure "Generative Language API" is ENABLED in Google Cloud Console.');
            return;
         }
 
@@ -55,7 +54,7 @@ export const useGemini = () => {
            console.log(`[AI] Switching to: ${best} 🚀`);
            setActiveModelName(best);
         } else if (available.length > 0) {
-           // Fallback
+           // If none of our preferred ones exist, take the first available one
            console.log(`[AI] Fallback to available model: ${available[0]}`);
            setActiveModelName(available[0]);
         }
@@ -72,20 +71,8 @@ export const useGemini = () => {
     setLoading(true);
     setError(null);
 
-    // [IRON DOME] 🛡️ Pre-Flight Safety Check
-    const safetyCheck = ContentValidator.validateInput(prompt);
-    if (!safetyCheck.safe) {
-      setLoading(false);
-      // Return a structured JSON error so widgets (Scanner/Dream) can parse it gracefully
-      return JSON.stringify({
-        status: "BLOCKED",
-        details: safetyCheck.reason,
-        flagged: "Safety Protocol Violation"
-      });
-    }
-
     try {
-      // STRATEGY A: On-Device Model (Privacy Gold Standard)
+      // 1. Try On-Device AI first
       const win = window as WindowAI;
       if (win.ai && (await win.ai.canCreateTextSession()) === 'readily') {
         const session = await win.ai.createTextSession();
@@ -94,29 +81,18 @@ export const useGemini = () => {
         return text;
       } 
       
-      // STRATEGY B: Cloud Fallback
+      // 2. Cloud Fallback
       const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-      if (!apiKey) throw new Error('No AI Engine found (Check API Key)');
+      if (!apiKey) throw new Error('API Key missing');
       
       const genAI = new GoogleGenerativeAI(apiKey);
       const model = genAI.getGenerativeModel({ model: activeModelName });
       
       const result = await model.generateContent(prompt);
-      const responseText = result.response.text();
-
-      // [IRON DOME] 🛡️ Post-Flight Hallucination Check
-      if (!ContentValidator.validateResponse(responseText)) {
-         return JSON.stringify({
-            status: "BLOCKED",
-            details: "AI generated unverified content.",
-            flagged: "Hallucination Risk"
-         });
-      }
-
-      return responseText;
+      return result.response.text();
 
     } catch (err: any) {
-      // User-friendly error handling
+      // Clean up the error message for the UI
       let msg = err.message || 'Service Error';
       if (msg.includes('404')) msg = `Model ${activeModelName} not found. Check API Access.`;
       if (msg.includes('400')) msg = 'Invalid API Key or Request.';

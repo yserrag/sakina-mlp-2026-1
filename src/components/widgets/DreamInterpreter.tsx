@@ -1,147 +1,140 @@
 import React, { useState } from 'react';
+import { Moon, Sparkles, AlertTriangle, BookOpen, Loader2, Info } from 'lucide-react';
 import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
-import { Moon, CloudMoon, Loader2, AlertCircle, ShieldCheck, Sparkles } from 'lucide-react';
+import { useGemini } from '../../features/ai/model/useGemini';
 
-interface Interpretation {
-  type: 'GOOD' | 'BAD' | 'MIXED';
-  summary: string;
-  symbols: string[];
-  advice: string;
-}
-
-export const DreamInterpreter: React.FC = () => {
+export const DreamInterpreter = () => {
   const [dream, setDream] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<Interpretation | null>(null);
+  const [result, setResult] = useState<{ type: string; interpretation: string; advice: string } | null>(null);
+  
+  // Use our Iron Dome AI Hook
+  const { generateResponse, loading, error } = useGemini();
 
-  // [MOCK] Simulates AI Interpretation for MLP Demo
-  const interpretDream = async () => {
-    if (!dream.trim() || loading) return;
-    
-    setLoading(true);
-    setResult(null);
+  const handleInterpret = async () => {
+    if (!dream.trim()) return;
 
-    // Simulate AI thinking time
-    setTimeout(() => {
-      const lowerDream = dream.toLowerCase();
-      let mockResponse: Interpretation;
+    // [UPGRADE] A stricter prompt that forces symbol extraction based on Ibn Sirin
+    const prompt = `
+      Act as an expert Islamic Dream Interpreter using Ibn Sirin's "Muntakhab al-Kalam fi Tafsir al-Ahlam".
+      
+      User's Dream: "${dream}"
 
-      // Simple keyword logic for demo purposes
-      if (lowerDream.includes('snake') || lowerDream.includes('fire') || lowerDream.includes('falling') || lowerDream.includes('dark')) {
-        mockResponse = {
-          type: 'BAD',
-          summary: "This dream may represent hidden fears or an enemy. In Islamic tradition, unpleasant dreams are often from Shaytan to cause distress.",
-          symbols: ['Darkness/Fear', 'Warning'],
-          advice: "Seek refuge in Allah (recite A'udhu billahi min ash-shaytan ir-rajim) and dry spit to your left 3 times. Do not share this dream."
-        };
-      } else if (lowerDream.includes('light') || lowerDream.includes('garden') || lowerDream.includes('flying') || lowerDream.includes('water')) {
-        mockResponse = {
-          type: 'GOOD',
-          summary: "A beautiful vision. Gardens and light often symbolize spiritual growth, peace, and the mercy of Allah.",
-          symbols: ['Light/Garden', 'Mercy'],
-          advice: "Praise Allah (Alhamdulillah) for this good news. You may share this with those you love and trust."
-        };
-      } else {
-        mockResponse = {
-          type: 'MIXED',
-          summary: "This dream appears to be a reflection of your daily thoughts ('Hadith an-Nafs') rather than a clear spiritual message.",
-          symbols: ['Daily Life', 'Thoughts'],
-          advice: "Do not worry about it. Focus on your waking life and connection with Allah."
-        };
+      Instructions:
+      1. Extract key symbols (e.g., Water, Snake, Flying, Teeth).
+      2. Match each symbol to Ibn Sirin's specific classical meaning.
+      3. Classify the dream type based on the symbols.
+
+      Output ONLY JSON in this format:
+      {
+        "type": "RUYA" | "HULM" | "NAFS",
+        "interpretation": "Specific meaning of the symbols found (e.g., 'The snake represents a hidden enemy...'). Avoid vague horoscopes.",
+        "advice": "Specific Sunnah action based on the result (e.g. 'Seek refuge', 'Give sadaqah', 'Praise Allah')."
       }
+    `;
 
-      setResult(mockResponse);
-      setLoading(false);
-    }, 2000); // 2 second delay
+    // 2. Ask Gemini
+    const response = await generateResponse(prompt);
+
+    // 3. Parse Response
+    if (response) {
+      try {
+        const cleanJson = response.replace(/```json|```/g, '').trim();
+        const data = JSON.parse(cleanJson);
+        setResult(data);
+      } catch (e) {
+        // Fallback if AI output is messy
+        setResult({
+          type: 'NAFS',
+          interpretation: 'Analysis inconclusive. This may be a reflection of daily thoughts.',
+          advice: 'Perform Wudu and recite Ayatul Kursi before sleeping.'
+        });
+      }
+    }
   };
 
   return (
-    <Card className="border-l-4 border-indigo-500 bg-gradient-to-br from-slate-900 to-indigo-950/50 text-white min-h-[320px] flex flex-col shadow-xl">
-      <div className="flex justify-between items-start mb-4 p-4 pb-0">
-        <div>
-          <h2 className="text-xl font-serif font-bold text-indigo-100 flex items-center gap-2">
-            Dream Interpreter
-          </h2>
-          <p className="text-xs text-indigo-300">Tafseer Al-Ahlam</p>
+    <Card className="bg-slate-900 border border-white/10 overflow-hidden flex flex-col min-h-[350px]">
+      
+      {/* Header */}
+      <div className="p-4 border-b border-white/5 flex justify-between items-center bg-indigo-950/30">
+        <div className="flex items-center gap-2">
+          <div className="bg-indigo-500/10 p-1.5 rounded-lg">
+            <Moon className="w-5 h-5 text-indigo-400" />
+          </div>
+          <div>
+            <h3 className="font-bold text-white text-sm uppercase tracking-wide">Dream Guide</h3>
+            <p className="text-[10px] text-slate-400">Based on Ibn Sirin's Methodology</p>
+          </div>
         </div>
-        <div className="bg-indigo-500/10 p-2 rounded-lg backdrop-blur-sm border border-indigo-500/20">
-          <Moon className="w-5 h-5 text-indigo-300" />
-        </div>
+        <Info className="w-4 h-4 text-slate-500" />
       </div>
 
-      {!result ? (
-        <div className="flex-1 flex flex-col space-y-4 p-4 pt-0">
-          <div className="bg-indigo-900/20 p-3 rounded-xl border border-indigo-500/20 text-xs text-indigo-200 leading-relaxed">
-            <span className="font-bold text-indigo-100 block mb-1 flex items-center gap-1"><Sparkles className="w-3 h-3" /> Etiquette of Dreams:</span>
-            True dreams are from Allah, bad dreams are from Shaytan. If you see something you dislike, do not share it.
+      {/* Body */}
+      <div className="flex-1 p-4 flex flex-col">
+        {error && (
+          <div className="mb-4 p-3 bg-red-900/20 border border-red-500/20 rounded-lg">
+             <p className="text-xs text-red-300">{error}</p>
           </div>
-          
-          <textarea
-            value={dream}
-            onChange={(e) => setDream(e.target.value)}
-            placeholder="I saw myself flying over a green garden..."
-            className="flex-1 w-full bg-slate-950/50 border border-indigo-500/30 rounded-xl p-4 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 placeholder:text-indigo-400/30 resize-none transition-all"
-          />
-          
-          <Button 
-            onClick={interpretDream} 
-            disabled={!dream.trim() || loading}
-            className="w-full bg-indigo-600 hover:bg-indigo-500 text-white border-0 shadow-lg shadow-indigo-900/20 h-12"
-          >
-            {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <CloudMoon className="w-4 h-4 mr-2" />}
-            {loading ? "Analyzing Symbols..." : "Interpret Dream"}
-          </Button>
-        </div>
-      ) : (
-        <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 p-4 pt-0">
-          <div className={`p-3 rounded-xl flex items-center gap-3 border ${
-            result.type === 'BAD' ? 'bg-red-500/10 text-red-200 border-red-500/20' : 
-            result.type === 'GOOD' ? 'bg-emerald-500/10 text-emerald-200 border-emerald-500/20' :
-            'bg-slate-700/30 text-slate-200 border-white/10'
-          }`}>
-             {result.type === 'BAD' ? <AlertCircle className="w-5 h-5 shrink-0" /> : <ShieldCheck className="w-5 h-5 shrink-0" />}
-             <div>
-                <span className="font-bold text-sm block">
-                    {result.type === 'BAD' ? 'Unpleasant Dream' : result.type === 'GOOD' ? 'Positive Vision' : 'Mixed / Psychological'}
-                </span>
-                <span className="text-[10px] opacity-80 uppercase tracking-wider font-bold">
-                    {result.type === 'BAD' ? 'Seek Refuge' : result.type === 'GOOD' ? 'Good Omen' : 'Neutral'}
-                </span>
-             </div>
+        )}
+
+        {!result ? (
+          <div className="flex-1 flex flex-col gap-4">
+             <textarea 
+               value={dream}
+               onChange={(e) => setDream(e.target.value)}
+               placeholder="Example: I saw myself drinking fresh milk in a green garden..."
+               className="flex-1 bg-slate-950 border border-white/10 rounded-xl p-4 text-sm text-white focus:outline-none focus:border-indigo-500 resize-none placeholder:text-slate-600"
+             />
+             <Button 
+               onClick={handleInterpret}
+               disabled={loading || !dream.trim()}
+               className="w-full bg-indigo-600 hover:bg-indigo-500 text-white"
+             >
+               {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Sparkles className="w-4 h-4 mr-2" />}
+               Interpret Dream
+             </Button>
           </div>
+        ) : (
+          /* Result Card */
+          <div className="animate-in slide-in-from-bottom-4 duration-500 flex-1 flex flex-col">
+            <div className={`flex-1 rounded-xl p-6 border flex flex-col items-center text-center justify-center mb-4 ${
+               result.type === 'RUYA' ? 'bg-indigo-900/20 border-indigo-500/30' :
+               result.type === 'HULM' ? 'bg-slate-800 border-slate-600' :
+               'bg-slate-900 border-white/10'
+            }`}>
+               
+               {result.type === 'RUYA' && <Sparkles className="w-10 h-10 text-indigo-400 mb-3" />}
+               {result.type === 'HULM' && <AlertTriangle className="w-10 h-10 text-amber-500 mb-3" />}
+               {result.type === 'NAFS' && <BookOpen className="w-10 h-10 text-slate-400 mb-3" />}
 
-          <div className="space-y-2">
-            <h3 className="text-xs font-bold text-indigo-300 uppercase tracking-widest">Interpretation</h3>
-            <p className="text-sm leading-relaxed text-indigo-50 font-medium bg-white/5 p-3 rounded-lg border border-white/5">"{result.summary}"</p>
-          </div>
+               <h2 className="text-xl font-bold text-white mb-1">
+                 {result.type === 'RUYA' ? 'Good Vision (Ru\'ya)' : 
+                  result.type === 'HULM' ? 'Unpleasant Dream' : 
+                  'Psychological'}
+               </h2>
+               
+               <p className="text-sm text-slate-300 mt-2 leading-relaxed">
+                 {result.interpretation}
+               </p>
+            </div>
 
-          {result.symbols.length > 0 && result.type !== 'BAD' && (
-             <div className="flex flex-wrap gap-2">
-                {result.symbols.map((s, i) => (
-                   <span key={i} className="text-[10px] bg-indigo-500/20 border border-indigo-400/20 px-2 py-1 rounded-md text-indigo-200">
-                      #{s}
-                   </span>
-                ))}
-             </div>
-          )}
+            <div className="bg-slate-950 p-4 rounded-xl border border-white/5">
+               <p className="text-[10px] uppercase text-slate-500 font-bold mb-1">Recommended Action</p>
+               <p className="text-sm text-indigo-300">{result.advice}</p>
+            </div>
 
-          <div className="bg-indigo-950/50 p-3 rounded-xl border border-indigo-500/20">
-             <h3 className="text-xs font-bold text-indigo-300 uppercase tracking-widest mb-1">Advice</h3>
-             <p className="text-xs text-indigo-100 italic">{result.advice}</p>
-          </div>
-
-          <div className="pt-2">
-            <Button variant="outline" size="sm" onClick={() => setResult(null)} className="w-full border-indigo-500/30 text-indigo-300 hover:bg-indigo-500/10 hover:text-white">
-                Analyze Another
+            <Button variant="ghost" onClick={() => { setResult(null); setDream(''); }} className="mt-4 text-slate-400">
+               Interpret Another
             </Button>
           </div>
-          
-          <p className="text-[9px] text-center text-indigo-400/50">
-             AI interpretation (Demo Mode). Consult a scholar for serious matters.
-          </p>
-        </div>
-      )}
+        )}
+      </div>
+      
+      {/* Disclaimer Footer */}
+      <div className="p-3 bg-slate-950 border-t border-white/5 text-[10px] text-slate-500 text-center">
+        Disclaimer: AI interpretation for reflection only. Not a Fatwa. Only Allah knows the unseen.
+      </div>
     </Card>
   );
 };
